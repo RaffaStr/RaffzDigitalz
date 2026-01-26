@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Lacak status pesanan top up game termurah dan terpercaya di Raffa Store.">
+    <title>Lacak Pesanan | Raffa Store Enterprise</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- 1. LAYOUT & UTILS --- */
+        :root {
+            --bg-card: #1e293b;
+            --text-secondary: #94a3b8;
+            --accent-process: #3b82f6;
+            --accent-success: #22c55e;
+            --accent-pending: #eab308;
+        }
+
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .main-content { flex: 1; padding-bottom: 60px; }
+
+        /* --- 2. FILTER TABS --- */
+        .filter-container {
+            display: flex; gap: 10px; overflow-x: auto; 
+            padding: 10px 0; margin-bottom: 20px;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+        .filter-container::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome */
+
+        .filter-btn {
+            background: var(--bg-surface-2); border: 1px solid var(--border);
+            color: var(--text-muted); padding: 8px 16px; border-radius: 50px;
+            font-size: 0.85rem; font-weight: 600; white-space: nowrap; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-btn.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* --- 3. HISTORY CARDS --- */
+        .history-card {
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; margin-bottom: 15px;
+            position: relative; overflow: hidden; transition: transform 0.2s;
+        }
+        .history-card:active { transform: scale(0.98); }
+        .history-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--border); transition: 0.3s;
+        }
+        .history-card.status-Pending::before { background: var(--accent-pending); }
+        .history-card.status-Success::before { background: var(--accent-success); }
+
+        .hc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .hc-id { font-family: monospace; font-size: 0.9rem; color: var(--text-muted); }
+        .hc-date { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 2px; }
+        
+        .hc-item { font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; }
+        .hc-price { font-size: 1rem; color: var(--primary); font-weight: 600; }
+
+        .status-badge {
+            padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .badge-Pending { background: rgba(234, 179, 8, 0.15); color: #fbbf24; }
+        .badge-Success { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+
+        /* --- 4. TIMELINE VISUALIZATION --- */
+        .timeline-box {
+            background: var(--bg-surface-2); padding: 15px; border-radius: 12px;
+            margin-top: 15px; display: none; /* Hidden by default */
+        }
+        .timeline-steps { display: flex; justify-content: space-between; position: relative; margin-top: 10px; }
+        .timeline-steps::after {
+            content: ''; position: absolute; top: 12px; left: 0; width: 100%; height: 2px;
+            background: var(--border); z-index: 0;
+        }
+        .step { position: relative; z-index: 1; text-align: center; width: 33%; }
+        .step-icon {
+            width: 25px; height: 25px; background: var(--bg-surface); border: 2px solid var(--text-muted);
+            border-radius: 50%; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: var(--text-muted); transition: 0.3s;
+        }
+        .step.active .step-icon { border-color: var(--accent-success); background: var(--accent-success); color: white; }
+        .step-text { font-size: 0.7rem; color: var(--text-muted); }
+        .step.active .step-text { color: var(--text-main); font-weight: bold; }
+
+        /* --- 5. FAQ ACCORDION --- */
+        .faq-section { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 30px; }
+        .faq-title { font-size: 1.2rem; margin-bottom: 15px; text-align: center; }
+        .accordion {
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+        }
+        .accordion-header {
+            padding: 15px; cursor: pointer; display: flex; justify-content: space-between;
+            font-weight: 600; font-size: 0.9rem; transition: background 0.2s;
+        }
+        .accordion-header:hover { background: rgba(255,255,255,0.05); }
+        .accordion-body {
+            padding: 0 15px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;
+            background: var(--bg-surface-2); font-size: 0.85rem; line-height: 1.6; color: var(--text-secondary);
+        }
+        .accordion.open .accordion-body { padding: 15px; max-height: 200px; border-top: 1px solid var(--border); }
+        .accordion-icon { transition: transform 0.3s; }
+        .accordion.open .accordion-icon { transform: rotate(180deg); }
+
+        /* --- 6. FOOTER --- */
+        footer {
+            text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 0.8rem;
+            background: var(--bg-surface-2); border-top: 1px solid var(--border); margin-top: 40px;
+        }
+        .social-links { margin-bottom: 15px; display: flex; justify-content: center; gap: 15px; }
+        .social-btn {
+            width: 35px; height: 35px; background: rgba(255,255,255,0.1); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white; text-decoration: none;
+            transition: 0.3s;
+        }
+        .social-btn:hover { transform: translateY(-3px); background: var(--primary); }
+
+        /* --- 7. ANIMATIONS --- */
+        @keyframes shimmer { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .loading-text { animation: shimmer 1.5s infinite; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="container nav-wrapper">
+            <div class="nav-brand" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <div style="background: rgba(255,255,255,0.1); width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </div>
+                <div style="display: flex; flex-direction: column; margin-left: 10px;">
+                    <span style="font-size: 1rem; line-height: 1;">Tracking</span>
+                    <span style="font-size: 0.7rem; opacity: 0.7; font-weight: 400;">Raffa Store System</span>
+                </div>
+            </div>
+            <div><i class="fa-solid fa-headset" style="font-size: 1.2rem; color: var(--text-muted);"></i></div>
+        </div>
+    </nav>
+
+    <div class="main-content container animate-enter" style="margin-top: 20px; max-width: 600px;">
+        
+        <div class="card" style="padding: 25px; border: 1px solid var(--border); margin-bottom: 25px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: var(--primary); filter: blur(60px); opacity: 0.2; border-radius: 50%;"></div>
+            
+            <div style="text-align: center; margin-bottom: 20px; position: relative; z-index: 1;">
+                <div style="width: 60px; height: 60px; background: rgba(59, 130, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <i class="fa-solid fa-magnifying-glass-location" style="font-size: 1.8rem; color: var(--primary);"></i>
+                </div>
+                <h3 style="margin: 0; font-size: 1.3rem;">Cek Status Pesanan</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;">Masukkan Invoice ID untuk melacak transaksi real-time.</p>
+            </div>
+
+            <div style="display: flex; gap: 10px; position: relative; z-index: 1;">
+                <input type="text" id="invoice-input" class="form-input" placeholder="Contoh: INV-1901-83921" style="margin:0; font-family: monospace; letter-spacing: 1px;">
+                <button onclick="manualSearch()" class="btn-pay" style="width: auto; padding: 0 20px; border-radius: 10px;"><i class="fa-solid fa-search"></i></button>
+            </div>
+        </div>
+
+        <div id="result-area" style="display: none; margin-bottom: 30px;">
+            </div>
+
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> Riwayat Terakhir
+            </h4>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Disimpan di perangkat ini</small>
+        </div>
+
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterHistory('all')">Semua</button>
+            <button class="filter-btn" onclick="filterHistory('Pending')">Pending</button>
+            <button class="filter-btn" onclick="filterHistory('SudahBayar')">Sudah Bayar</button>
+            <button class="filter-btn" onclick="filterHistory('Proses')">Proses</button>
+            <button class="filter-btn" onclick="filterHistory('Sukses')">Berhasil</button>
+            <button class="filter-btn" onclick="filterHistory('Failed')">Gagal</button>
+        </div>
+
+        <div id="history-list">
+            <div style="padding: 40px 20px; text-align: center; border: 1px dashed var(--border); border-radius: 16px;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 15px;"></i>
+                <p class="loading-text" style="color: var(--text-muted);">Sedang memuat data...</p>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h3 class="faq-title">Pertanyaan Umum</h3>
+            
+            <div class="accordion" onclick="toggleAccordion(this)">
+                <div class="accordion-header">
+                    <span>Berapa lama proses masuk?</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-body">
+                    Estimasi proses 1-10 menit untuk produk normal. Untuk Joki tergantung antrian dan tingkat kesulitan. Jika lebih dari 30 menit, silakan hubungi admin.
+                </div>
+            </div>
+
+            <div class="accordion" onclick="toggleAccordion(this)">
+                <div class="accordion-header">
+                    <span>Status "Pending" artinya apa?</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-body">
+                    Artinya pesanan sudah dibuat tapi pembayaran belum terkonfirmasi atau sedang dalam antrian pengecekan oleh Admin.
+                </div>
+            </div>
+
+            <div class="accordion" onclick="toggleAccordion(this)">
+                <div class="accordion-header">
+                    <span>Salah kirim bukti transfer?</span>
+                    <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                </div>
+                <div class="accordion-body">
+                    Segera hubungi Admin via WhatsApp dengan menyertakan Invoice ID dan Bukti Transfer yang benar.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <div class="social-links">
+            <a href="#" class="social-btn"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="#" class="social-btn"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="social-btn"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+        <p>&copy; 2025 Raffa Store Indonesia.<br>All Rights Reserved. Enterprise Engine v600.0</p>
+    </footer>
+
+    <script src="script.js"></script>
+
+    <script>
+        // ================================================================
+        // ADVANCED HISTORY LOGIC (TITAN EDITION)
+        // ================================================================
+
+        let globalOrders = [];
+
+        // 1. INITIALIZE
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simulasi loading biar terlihat 'mahal'
+            setTimeout(() => {
+                globalOrders = getAllOrders();
+                renderHistory(globalOrders);
+            }, 800);
+        });
+
+        // 2. SMART DATA FETCHING
+        function getAllOrders() {
+            const keys = [
+                'raffa_store_v500_order_transaction_history', 
+                'raffa_orders_v200', 
+                'transaction_history'
+            ];
+            
+            let data = [];
+            keys.forEach(k => {
+                try {
+                    const raw = localStorage.getItem(k);
+                    if(raw) data = [...data, ...JSON.parse(raw)];
+                } catch(e) {}
+            });
+
+            // Hapus Duplikat & Sortir
+            const unique = Array.from(new Map(data.map(item => [item['invoiceId'], item])).values());
+            return unique.reverse();
+        }
+
+        // 3. RENDER FUNCTION
+        function renderHistory(data) {
+            const container = document.getElementById('history-list');
+            
+            if(data.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 40px 20px; opacity: 0.6;">
+                        <i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 15px; color: var(--text-muted);"></i>
+                        <p>Belum ada riwayat transaksi.</p>
+                        <button onclick="window.location.href='index.html'" class="btn-pay" style="width:auto; margin-top:15px; padding: 8px 20px; font-size:0.9rem;">Belanja Sekarang</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.slice(0, 20).map(o => {
+                const isSuccess = o.status === 'Success';
+                const statusClass = isSuccess ? 'Success' : 'Pending';
+                
+                // Format Harga Aman (Tanpa dependency script.js)
+                const price = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(o.itemPrice || 0);
+
+                return `
+                <div class="history-card status-${statusClass} animate-enter" onclick="showDetail('${o.invoiceId}')">
+                    <div class="hc-header">
+                        <div>
+                            <span class="hc-id">#${o.invoiceId}</span>
+                            <span class="hc-date"><i class="fa-regular fa-clock"></i> ${o.timestamp || 'Baru Saja'}</span>
+                        </div>
+                        <span class="status-badge badge-${statusClass}">${o.status || 'PENDING'}</span>
+                    </div>
+                    <div class="hc-item">${o.itemName || 'Produk Tidak Dikenal'}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="hc-price">${price}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);"><i class="fa-solid fa-gamepad"></i> ${o.gameName || 'Game'}</div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // 4. FILTER FUNCTION
+        function filterHistory(type) {
+            // Update UI Button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if(type === 'all') {
+                renderHistory(globalOrders);
+            } else {
+                const filtered = globalOrders.filter(o => (o.status || 'Pending') === type);
+                renderHistory(filtered);
+            }
+        }
+
+        // 5. DETAIL & SEARCH LOGIC
+        function manualSearch() {
+            const inv = document.getElementById('invoice-input').value.trim();
+            if(!inv) return alert("Mohon masukkan nomor Invoice!");
+            showDetail(inv);
+        }
+
+        function showDetail(invId) {
+            const order = globalOrders.find(o => o.invoiceId === invId);
+            const area = document.getElementById('result-area');
+            const price = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order ? order.itemPrice : 0);
+
+            if(order) {
+                const isSuccess = order.status === 'Success';
+                
+                // Timeline Logic (Visual Only)
+                const step2Class = isSuccess ? 'active' : ''; 
+                const step3Class = isSuccess ? 'active' : ''; 
+
+                area.style.display = 'block';
+                area.innerHTML = `
+                    <div class="card animate-enter" style="border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);">
+                        <div style="text-align:center; padding-bottom: 15px; border-bottom: 1px dashed var(--border);">
+                            <div style="font-size: 2rem; color: var(--primary); margin-bottom: 5px;">
+                                ${isSuccess ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-clock"></i>'}
+                            </div>
+                            <h2 style="margin:0;">${isSuccess ? 'Transaksi Berhasil' : 'Menunggu Proses'}</h2>
+                            <p style="color:var(--text-muted); margin: 5px 0;">Invoice #${order.invoiceId}</p>
+                        </div>
+
+                        <div class="timeline-box" style="display:block;">
+                            <div class="timeline-steps">
+                                <div class="step active">
+                                    <div class="step-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                                    <div class="step-text">Dibuat</div>
+                                </div>
+                                <div class="step ${step2Class}">
+                                    <div class="step-icon"><i class="fa-solid fa-gears"></i></div>
+                                    <div class="step-text">Diproses</div>
+                                </div>
+                                <div class="step ${step3Class}">
+                                    <div class="step-icon"><i class="fa-solid fa-check"></i></div>
+                                    <div class="step-text">Selesai</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px; font-size: 0.9rem;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="color:var(--text-muted);">Item</span>
+                                <b>${order.itemName}</b>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="color:var(--text-muted);">Pembayaran</span>
+                                <b>${order.paymentMethod}</b>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="color:var(--text-muted);">Total</span>
+                                <b style="color:var(--primary); font-size:1.1rem;">${price}</b>
+                            </div>
+                            <div style="background:var(--bg-surface-2); padding:10px; border-radius:8px; margin-top:10px; font-family:monospace; font-size:0.85rem; color:var(--text-secondary);">
+                                ${order.userData ? order.userData.replace(/\n/g, '<br>') : '-'}
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 20px; display:grid; gap:10px;">
+                            <a href="https://wa.me/6281385435612?text=Halo%20Admin,%20Komplain%20transaksi%20${order.invoiceId}" class="btn-pay" style="text-decoration:none; text-align:center; background: var(--bg-surface-2); border: 1px solid var(--border);">
+                                <i class="fa-brands fa-whatsapp"></i> Bantuan Admin
+                            </a>
+                            <button onclick="document.getElementById('result-area').style.display='none'" style="padding:10px; background:none; border:none; color:var(--text-muted); cursor:pointer;">Tutup Detail</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                alert("Nomor Invoice tidak ditemukan di riwayat perangkat ini.");
+            }
+        }
+
+        // 6. ACCORDION LOGIC
+        function toggleAccordion(element) {
+            element.classList.toggle('open');
+        }
+    </script>
+
+</body>
+</html>
