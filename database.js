@@ -25,7 +25,7 @@ const DATABASE = {
     // 2. KODE VOUCHER DISKON
     // =================================================================
     vouchers: {
-        "RAFFA2025": 1000,
+        "RAFFA2025": 500,
         "MEMBERBARU": 500,
         "SULTAN": 5000,
         "GAJIAN": 2000,
