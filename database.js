@@ -25,7 +25,7 @@ const DATABASE = {
     // 2. KODE VOUCHER DISKON
     // =================================================================
     vouchers: {
-        "RAFFA2025": 1000,
+        "RAFFA2026": 1000,
         "MEMBERBARU": 500,
         "SULTAN": 5000,
         "GAJIAN": 2000,
@@ -264,7 +264,7 @@ const DATABASE = {
             { name: "278 Diamond", price: 73000 },
             { name: "284 Diamond", price: 74000 },
             { name: "296 Diamond", price: 76000 },
-            { name: "301 Diamond", price: 78500 },
+            { name: "301 Diamond", price: 78500 }
             { name: "344 Diamond", price: 88000 },
             { name: "345 Diamond", price: 90000 },
             { name: "355 Diamond", price: 92000 },
